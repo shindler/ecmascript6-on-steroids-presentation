@@ -1,0 +1,2541 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>EMCAScript 6 czyli JavaScript na sterydach</title>
+
+		<meta name="description" content="Omówinie draftu specyfikacji EMCAScript6 przez pryzmat aktualnie znanych opracowań">
+		<meta name="author" content="Łukasz -Max- Kokoszka. l.kokoszka@gmail.com or lkokoszka@future-processing.com">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/moon.css" id="theme">
+		<link rel="stylesheet" href="css/presentation.css">
+
+		<!-- Code syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+				<section data-background="images/hows-javascript.jpg" class="presentation-cover">
+					<h1>ECMAScript 6</h1>
+					<h3>czyli JavaScript na sterydach</h3>
+					<p>
+						<small>by <a href="mailto:lkokoszka@future-processing.com">lkokoszka@future-processing.com</a> aka &quot;Max&quot;</small>
+					</p>
+				</section>
+
+				<section data-background="images/hows-javascript.jpg">
+                    <h2>&nbsp;</h2>
+				</section>
+
+				<section class="presentation-history">
+					<h2>Historia</h2>
+					<ul class="stretch">
+						<li class="fragment"><b>Mocha/LiveScript</b> Netscape CC (~1995)</li>
+						<li class="fragment"><b>ECMAScript 1-3.1</b> czyli rdzeń dzisiejszego języka (standard ECMA-262) (1997-1999)</li>
+						<li class="fragment"><b>ECMAScript 4</b> nigdy nie został opublikowany</li>
+						<li class="fragment"><b>ECMAScript 5</b> (12.2009)</li>
+						<li class="fragment"><b>ECMAScript 5.1</b> (06.2011)</li>
+						<li class="fragment"><b class="color-orange">ECMAScript 6</b> (06.2015? &quot;feature frozen&quot; od 08.2014)</li>
+						<li class="fragment"><b>ECMAScript 7</b> !?</li>
+					</ul>
+				</section>
+
+				<section class="presentation-goals">
+					<h2>Cele</h2>
+					<ul class="stretch">
+						<li>dodanie nowych typów danych</li>
+						<li>usprawnienie pracy z już dostępnymi typami danych</li>
+						<li>wprowadzenie nowych możliwości do języka</li>
+						<li>optymalizacje, rozwiązanie problemów-ciągutek</li>
+					</ul>
+				</section>
+
+				<section class="presentation-unicode">
+					<section>
+						<h2>Lepsza obsługa Unicode</h2>
+					</section>
+
+					<section>
+						<h3 class="no-transform">zmiany w rdzeniu języka</h3>
+						<ul class="stretch">
+							<li>wymuszenie <b class="color-white">UTF-16</b> jako domyślnego i jedynego kodowania znaków</li>
+							<li>uzyskanie wsparcia dla wszystkiego poza zakresem Basic Multilingual Plane (BMP) (tj. powyżej 2^16)</li>
+							<li>wyeliminowanie problemów  znanych z ECMAScript 5 związanych z ograniczenami 16-bitowych "code units"</li>
+						</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">ECMAScript 5</h3>
+						<pre>
+						<code data-trim>
+var text = "𠮷";				// CJK UNIFIED IDEOGRAPH
+console.log(text.length);		// 2 (surrogate pair)
+console.log(/^.$/.test(text));		// singe character test; false
+console.log(text.charAt(0));		// ""
+console.log(text.charAt(1));		// ""
+console.log(text.charCodeAt(0));	// 55362
+console.log(text.charCodeAt(1));	// 57271
+
+						</code>
+						</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">ECMAScript 6</h3>
+						<pre>
+						<code data-trim>
+var text = "𠮷a";
+console.log(text.charCodeAt(0));	// 55362
+console.log(text.charCodeAt(1));	// 57271
+console.log(text.charCodeAt(2));	// 97
+
+console.log(text.codePointAt(0));	// 134071
+console.log(text.codePointAt(1));	// 57271
+console.log(text.codePointAt(2));	// 97
+						</code>
+						</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">codePointAt() &amp;&amp; String.fromCodePoint()</h3>
+						<ul>
+							<li>''.<b class="color-white">codePointAt(code_unit_position)</b><br>aby wyciągnąć "code point" (id znaku) w trybie "Non-BMP safe"</li>
+							<li><b class="color-white">String.fromCodePoint(int)</b><br>aby wyciągnąć znak po jego "code point" w trybie "Non-BMP safe"</li>
+						</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">escape'owanie znaków Non-BMP</h3>
+							<pre>
+							<code data-trim>
+console.log("\u0061");		// "a" - aktualny standard
+console.log("\u20BB7");		// "₻7" - próba użycia znaku Non-BMP
+console.log("\u{20BB7}");	// " " - ECMAScript 6
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">normalizacja znaków</h3>
+						<ul>
+							<li><b class="color-white">normalize(metoda_normalizacji)</b>
+							nowa metoda dostępna na string'ach służąca do normalizacji przez transliterację<br>
+							<small>dostępne są 4 metody normalizacji: NFC, NFD, NFKC, NFKD</small>
+						</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">nowa flaga dla regexp'ów</h3>
+						<p>
+							<b class="color-white">/u</b> - wymusza prace silnika wyrażeń regularnych w oparciu o znaki, nie "code units"
+						</p>
+					</section>
+				</section>
+
+				<section>
+
+					<section>
+						<h2>String<span class="no-transform">'i</span></h2>
+					</section>
+
+					<section>
+						<h3 class="no-transform">nowe metody</h3>
+						<ul class="stretch">
+							<li>''.<b class="color-white">includes(tekst, location)</b> - sprawdza czy dany tekst występuję w łańcuchu znaków</li>
+							<li>''.<b class="color-white">startsWith(tekst, location)</b> - sprawdza czy na początku łańcucha znaków występuje podany tekst</li>
+							<li>''.<b class="color-white">endsWith(tekst, location)</b> - sprawdza czy na końcu łańcucha znaków występuje podany tekst</li>
+						</ul>
+
+						<p>* <small>wszystkie przyjmują parametr location, czyli punkt początkowy i zwracają wartość bool'owską</small></p>
+
+						<ul class="stretch">
+							<li>''.<b class="color-white">repeat(n_razy)</b> - powtórzy dany string n razy</li>
+						</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">iteratory dla string'ów</h3>
+						<ul class="stretch">
+							<li>wraz z wprowadzenie iteratorów i generatów ich obsługa zostaje udostępniona dla string'ów</li>
+							<li>iteracja odbywa się po znakach nie po "code units"</li>
+							<li><b>ale!!!</b> bracket-notation nadal porusza się po "code units"</li>
+						</ul>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>string templates</h2>
+					</section>
+
+					<section>
+						<h3 class="no-transform">jak miałobyć?</h3>
+						<ul class="stretch">
+							<li>dodają "syntax sugar" pozwalający na budowanie DSL dla uproszczenia pracy z zawartością</li>
+							<li>mają być odporne na różne wektory ataków (np. XSS, SQL Injection itd)</li>
+						</ul>
+						<h3 class="no-transform">jak jest?</h3>
+						<ul class="stretch">
+							<li>rozwiązują problem wielolinijkowych string'ów</li>
+							<li>pozwalają na proste formatowanie przez substytucje na podstawie parametrów</li>
+						</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">podstawy</h3>
+							<pre>
+							<code data-trim>
+let oneLiner = `it is a one line`;	// znak delimitacji `
+
+let multiLiner_maybe_bad = `Multi	// zachowuje się jak &lt;pre&gt;
+			line text`;
+
+let multiLiner_maybe_good = `		// prosty trick
+Multi
+line text
+`.trim();
+
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">interpolacja</h3>
+							<pre>
+							<code data-trim>
+let	what = 'dog',
+	with = 'a long tail',
+
+	// używamy zmiennych "osiągalnych" w scope'ie
+	msg1 = `it is a ${what}`,
+	msg2 = `it is a ${what} with ${with}`;
+
+console.log(msg1);	// "it is a dog"
+console.log(msg2);	// "it is a dog with a long tail"
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">interpolacja i wyrażenia (expressions)</h3>
+							<pre>
+							<code data-trim>
+let	howMuch = 20,
+	exchangeRate = 4,
+	convert = function (eur, exRate) {
+		return (eur * exRate).toFixed(2);
+	},
+
+	euro2pln = `it is ${(howMuch * exchangeRate).toFixed(2)} PLN`;
+	euro2plnFn = `it is ${convert(howMuch,exchangeRate)} PLN`;
+
+console.log(euro2pln);	// "it is 80.00 PLN"
+console.log(euro2plnFn);	// "it is 80.00 PLN"
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">transformacje na szablonach czyli tzw. "tagged templates"</h3>
+						<h4 class="no-transform"></h4>
+							<pre>
+							<code data-trim>
+tag`Hello ${name}`
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">transformacje na szablonach czyli tzw. "tagged templates" c.d.</h3>
+						<ul class="stretch">
+							<li><b class="color-white">wymagają zdefiniowania funkcji transformującej</b>, która akceptuje następujące argumenty:
+							<ul class="stretch">
+								<li>tablicę utworzoną na podstawie pocięcią szablonu po interpolacjach tzw. "literals"</li>
+								<li>n-argumentów które będą wynikami wykonania kolejnych interpolacji<br>
+								<small>
+									dlatego też zaleca się stosowanie notacji dwu-argumentowej -> ...rest args<br>
+									wtedy to powstaje prosta zależność: <b>arguments[0].length + 1 = arguments[1].length;</b>
+								</small>
+								</li>
+							</ul>
+
+						</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">transformacje na szablonach czyli tzw. "tagged templates" c.d.</h3>
+							<pre>
+							<code data-trim>
+function extRangeTrans(literals, ...substitutions) {
+	let result = "", i;
+
+	for (i = 0; i < substitutions.length; i++) {
+		result += literals[i];
+		result += substitutions[i];
+	}
+
+	result += literals[literals.length - 1];
+	return result;
+}
+
+let	pln = 20,
+	exRate = 4.2,
+	euro2pln = extRangeTrans`
+		${eur} EUR (@ ${exRate}) is
+		${(eur * exRate).toFixed(2)} PLN
+	`.trim();
+
+console.log(euro2pln); //20 EUR (@ ${exRate}) is 84.00 PLN
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">pozostałe możliwości</h3>
+						<ul class="stretch">
+							<li><b class="color-white">String.raw</b> to jedyny wbudowany tag pozwalający powstrzymać escepowanie znaków specjalnych</li>
+							<li>
+							dodatkowo "literals" w funkcji transformującej udostępnia właściwość
+							<b class="color-white">.raw</b> dla każdego elementu tablicy który zawiera literał przed escepowaniem
+							</li>
+						</ul>
+							<pre>
+							<code data-trim>
+`a\nb`
+// a
+// b
+String.raw`a\nb`
+//a\nb
+
+
+							</code>
+							</pre>
+					</section>
+
+				</section>
+
+				<section>
+					<section>
+						<h2>regular expressions</h2>
+					</section>
+
+					<section>
+						<h3 class="no-transform">co nowego poza flagą `u`? może: `y`</h3>
+						<ul class="stretch">
+							<li><b class="color-white">y</b> - znana już z FireFox'a flaga sprawiająca, że wyszukiwanie zawsze odbywa się w odniesieniu
+								do właściwości <b class="color-white">`lastIndex`</b> wyrażenia regularnego, tj. ostatniego zapamiętanego położenia w
+								łańcuchu znaków.<br>
+								<small>Domyślnie 0. (implikuje użycie ^ podczas wyszukiwania)</small>
+							</li>
+							<li>stan flagi można sprawdzić poprzez odpytanie właściwości <b class="color-white">`.sticky`</b> instancji wyrażenia regularnego</li>
+						</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">`yyyy`, a może przykładzik</h3>
+						<pre>
+							<code data-trim>
+var text = 'First line\nsecond line';
+var regex = /(\S+) line\n?/y;
+
+var match = regex.exec(text);
+match[1]        // 'First'
+regex.lastIndex // '11'
+
+var match2 = regex.exec(text);
+match2[1]       // 'Second'
+regex.lastIndex // '22'
+
+var match3 = regex.exec(text);
+match3 === null // 'true'
+							</code>
+						</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">inne nowości</h3>
+						<ul class="stretch">
+							<li>ECMAScript 6 umożliwia <b class="color-white">duplikację wyrażenie reg.</b> przez użycie konstruktora RegExp z dodatkową opcją <b class="color-white">nadpisania flag</b>.
+								<br><small>w ECMAScript 5 taka próba skutkowała błędem</small>
+							</li>
+							<li>właściwość <b class="color-white">`.flags`</b> na wyrażeniu regularnym zwraca użyte flagi (jako string)</li>
+						</ul>
+						<pre>
+							<code data-trim>
+var re1 = /ab/i,
+    re2 = new RegExp(re1, "g");
+							</code>
+						</pre>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>number's i math</h2>
+					</section>
+
+					<section>
+						<h3 class="no-transform">obsługa wartości oktalnych i binarnych</h3>
+						<ul class="stretch">
+							<li>liczby w system oktalnym: <b class="color-white">0o</b></li>
+							<li>liczby w system binarnym: <b class="color-white">0b</b></li>
+							<li>konstruktor <b class="color-white">Number</b> będzie wspierał obsługę nowej notacji liczb</li>
+							<li>ale <b class="color-white">parseInt</b> nie będzie wspierał ich ekstrakcji ze string'ów</li>
+						</ul>
+						<pre>
+							<code data-trim>
+var value1 = 0o71;   // 57
+var value2 = 0b101;  // 5
+parseInt("0o71");    // 0
+parseInt("0b101");   // 0
+Number("0o71");      // 57
+Number("0b101");     // 5
+							</code>
+						</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">standaryzajca dostępu do metod / lepszy namespacing</h3>
+						<ul class="stretch">
+							<li>`isFinite` oraz `isNan` będą dostępne również jako statyczne metody <b class="color-white">Number</b>
+								<b class="color-white">.isFinite</b> i <b class="color-white">.isNan</b>.<br>
+								<small>Różnica będzie polegać na tym, że argument nie będzie przekazywany przez konstruktor Number, co oznacza, że jeśli nie zostanie przekazany
+								argument typu Number, silnik rzuci błędem.</small>
+							</li>
+							<li>`parseInt` oraz `parseFloat` również będą dostępne jako statyczne metody <b class="color-white">Number</b>
+								<b class="color-white">.parseInt</b> i <b class="color-white">.parseFloat</b>.<br>
+								<small>tutaj nie zachodzi żadana zmiana w ich działaniu, poza umieszczeniem w namespacie Number.</small>
+							</li>
+						</ul>
+						<pre>
+							<code data-trim>
+isFinite(25)              // true
+isFinite("25")            // true
+Number.isFinite(25)       // true
+Number.isFinite("25")     // false
+
+isNaN(NaN)                // true
+isNaN("NaN")              // true
+Number.isNaN(NaN)         // true
+Number.isNaN("NaN")       // false
+						</code>
+						</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">nowe możliwości</h3>
+						<ul class="stretch">
+							<li><b class="color-white">Number.isInteger</b> aby sprawdzić czy zadana liczba jest integer'em.
+							</li>
+							<li><b class="color-white">Number.isSafeInteger</b> aby sprawdzić czy podana liczba jest int'em w "bezpiecznym zakresie" tj. <-2^53; 2^53></li>
+							<li>
+								Dwie właściwości statyczne <b class="color-white">Number</b> określające "bezpieczny zakres" dla int'ów:
+								<b class="color-white">.MIN_SAFE_INTEGER</b> i <b class="color-white">.MAX_SAFE_INTEGER</b>
+							</li>
+						</ul>
+						<pre>
+							<code data-trim>
+Number.isInteger(25)      // true
+Number.isInteger(25.0)    // true
+Number.isInteger(25.1)    // false
+
+Number.isSafeInteger(9007199254740991) // true
+Number.isSafeInteger(9007199254740992) // false
+						</code>
+						</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">17 nowych metod Math</h3>
+						<ul class="stretch">
+							<li>cały zbiór nowych metod matematycznych:<br>
+								<b class="color-white">acosh</b>,
+								<b class="color-white">asinh</b>,
+								<b class="color-white">atanh</b>,
+								<b class="color-white">cbrt</b>,<br>
+								<b class="color-white">cl232</b>,
+								<b class="color-white">cosh</b>,
+								<b class="color-white">expm1</b>,
+								<b class="color-white">fround</b>,<br>
+								<b class="color-white">hypot</b>,
+								<b class="color-white">imul</b>,
+								<b class="color-white">log1p</b>,
+								<b class="color-white">log10</b>,<br>
+								<b class="color-white">log2</b>,
+								<b class="color-white">sign</b>,
+								<b class="color-white">sinh</b>,
+								<b class="color-white">tanh</b>,
+								<b class="color-white">trunc</b>
+							</li>
+						</ul>
+					</section>
+
+				</section>
+
+				<section>
+					<section>
+						<h2>zasięg blokowy</h2>
+						<h3 class="no-transform">czyli wyrażenia `let` i `const`</h3>
+					</section>
+
+					<section>
+						<h3 class="no-transform">zasięg blokowy i wyrażenie `let`</h3>
+						<pre>
+							<code data-trim>
+let color = 'red';
+
+if (true) {
+	console.log(color) // ReferenceError
+	let color = 'white';
+	console.log(color) // "white"
+}
+
+console.log(color) // "red"
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">zasięg blokowy i wyrażenie `let`*</h3>
+							<ul class="stretch">
+								<li>wyrażenie <b class="color-white">let</b> daje nam możliwość tworzenia <b class="color-white">zmiennych
+								lokalnych</b> dostępnych tylko w scopie danego bloku kodu (tj. kodu opakowanego w {...})</li>
+								<li>zmienne <b class="color-white">nie są hoistowane</b> do najbliższego bloku funkcyjnego</li>
+								<li>...ale też <b class="color-white">nie są hoistowane</b> w zakresie bloku w którym został zadeklarowane<br>
+								<small>powstaje tzw. TDZ: <i>temporal dead zone</i> tj. użycie zmiennej przed jej deklaracją zwróci <i>ReferenceError</i>
+								</small>
+								</li>
+							</ul>
+							<small>* - na dzień dzisiejszy niektóre przeglądarki wymagają użycia `strict mode`</small>
+					</section>
+
+					<section>
+						<h3 class="no-transform">zasięg blokowy i wyrażenie `let` c.d.</h3>
+							<ul class="stretch">
+								<li>użycie <b class="color-white">let</b> w zagnieżdżonym bloku powoduje <b class="color-white">shadowing</b>
+								zmiennej z bloku nadrzędnego
+								</li>
+								<li>zabrania się użycia <b class="color-white">let</b> w scopie globalnym z nazwą właściwości obiektu globalnego, która jest
+								niekonfigurowalna!
+								</li>
+								<li>redeklaracja zmiennej z użyciem <b class="color-white">let</b> lub <b class="color-white">var</b> w jednym bloku
+								<u>powinno</u> skutować błędem składni.**</li>
+							</ul>
+							<small>** - Firefox, rzuca TypeError</small>
+					</section>
+
+					<section>
+						<h3 class="no-transform">pętle i zmienne deklarowane via `let`</h3>
+							<small>najbardziej zauważalna różnica dotyczy użycie `let` i pętli `for`,
+							gdzie każde wykonanie pętli powoduje inicjalizację
+							nowej zmiennej
+							</small>
+							<p><b class="color-white">użycie var</b></p>
+							<pre>
+							<code data-trim>
+var funcs = [];
+
+for (var i = 0; i < 10; i++) {
+	funcs.push( function () { console.log(i); });
+}
+
+funcs.forEach(function (func) {
+	func();	// wypluje liczbę "10" 10x
+});
+							</code>
+							</pre>
+							<p>verte &#8595;</p>
+					</section>
+
+					<section>
+						<h3 class="no-transform">pętle i zmienne deklarowane via `let` c.d.</h3>
+							<p><b class="color-white">użycie let</b></p>
+							<pre>
+							<code data-trim>
+var funcs = [];
+
+for (let i = 0; i < 10; i++) {
+	funcs.push( function () { console.log(i); });
+}
+
+funcs.forEach(function (func) {
+	func();	// wypluje liczbę "0", potem "1" itd.
+});
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">stałe, czyli wyrażenie `const`</h3>
+							<ul class="stretch">
+								<li>
+								ECMAScript 6 wprowadza możliwość użycia stałych dzięki ich deklaracji z użyciem
+								wyrażenia <b class="color-white">const</b>
+								</li>
+								<li>stałe zachowują się jak zmienne zadeklarowane z użyciem `let` tj. są przypisane do bloku w którym
+								zostały zdeklarowane
+								</li>
+							</ul>
+							<pre>
+							<code data-trim>
+const MAX_SIZE = 'red';
+							</code>
+							</pre>
+					</section>
+
+				</section>
+
+				<section>
+					<section>
+						<h2>destrukturyzacja</h2>
+					</section>
+
+					<section>
+						<h3 class="no-transform">destrukturyzacja obiektów</h3>
+						<h4 class="no-transform">czyli szybkie wydobywanie właściwości do zmiennych lokalnych</h4>
+							<pre>
+							<code data-trim>
+var sourceObject = {from: 1, to: 2}
+
+function ECMAScript5 (sourceObject) {
+	var	localFrom = sourceObject.from,
+		localTo = sourceObject.to;
+}
+
+function ECMAScript6 (sourceObject) {
+	let { from: localFrom, to: localTo } = sourceObject;
+	console.log(localFrom, localTo); // :)
+
+	// lub w przypadku mapowania nazwenictwa 1:1
+
+	let { from, to } = sourceObject;
+	console.log(from, to); // :D
+}
+							</code>
+							</pre>
+							<small>{ wlasciwoscObiektuZrodlowego: zmienneLokalna} = obiektZrodlowy</small>
+					</section>
+
+					<section>
+						<h3 class="no-transform">destrukturyzacja obiektów c.d.</h3>
+							<h4 class="no-transform">obsługa zagnieżdżonych obiektów</h4>
+							<pre>
+							<code data-trim>
+var sourceObject = { from: 1, to: 2, more: { max: 3 } };
+
+// później gdzieś w kodziwie...
+
+let { from, to, more: { max }} = sourceObject;
+
+console.log(from, to, max);
+// :D - ! `more` nie zostanie zadeklarowane
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">destrukturyzacja tablic</h3>
+							<pre>
+							<code data-trim>
+var kolory = ['red', 'green', 'blue'];
+
+// później gdzieś w kodziwie...
+
+let [firstColor, secondColor] = kolory;
+
+console.log(firstColor, secondColor) // :D
+							</code>
+							</pre>
+							<small>[ pierwszyElement, drugiElement...] = tablicaZrodlowa</small>
+					</section>
+
+					<section>
+						<h3 class="no-transform">destrukturyzacja mieszana</h3>
+							<pre>
+							<code data-trim>
+var	sourceObject = { from: 1, to: 2, colors: [
+		'red', 'green', 'blue'
+	]};
+
+// później gdzieś w kodziwie...
+
+let {from, to, colors: [firstColor, secondColor]} = kolory;
+console.log(from, to, firstColor, secondColor) // :D
+
+let {from, to, colors} = kolory;
+console.log(from, to, colors)
+// :D - colors będzie referencją do sourceObject.colors
+							</code>
+							</pre>
+					</section>
+
+				</section>
+
+				<section>
+					<section>
+						<h2>funkcje</h2>
+					</section>
+
+					<section>
+						<h3 class="no-transform">wartości domyślne parametrów funkcji</h3>
+
+							<pre>
+							<code data-trim>
+function reload (what, in = 2000, then = function () {} ) { }
+
+function defaultAddWhatValue () { return 0; }
+
+function add (addTo, addWhat = defaultAddWhatValue() + 0) { }
+							</code>
+							</pre>
+							<ul class="stretch">
+								<li>użycie domyślnych parametrów, nie wymaga definiowania parematerów w jakiejkolwiek określonej kolejności<br>
+									<small> aby pominąć parametr domyślny podczas wywołania należy przekazać undefined</small>
+								</li>
+								<li>można odwoływać się do wyrażeń (w tym innych funkcji) w celu pozyskania domyślnej wartości</li>
+							</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">"rest params", czyli "cała reszta"</h3>
+							<pre>
+							<code data-trim>
+function sampleRest (param1, param2, ...options) {
+	...
+	console.log(options.length);
+	// ^ == przekazane - zadeklarowane nazwane
+}
+							</code>
+							</pre>
+							<ul class="stretch">
+								<li>to "wrzucanie" wszystkich nienazwanych parametrów do jednego "nazwanego"</li>
+								<li><b class="color-white">rest params</b> definiuje się jako ostatni parametr funkcji (po innych nazwanych), przy użyciu
+								specjalnej notacji: <b class="color-white">...<i>localName</i></b>
+								</li>
+							</ul>
+
+							<small>użycie "rest params" wyklucza użycie `arguments` w ciele funkcji</small>
+					</section>
+
+					<section>
+						<h3 class="no-transform">parametry destrukturyzowane</h3>
+														<pre>
+							<code data-trim>
+function destParams (param1, {setting1, setting2}, {setting3} = {}) {
+	console.log(param1, setting1, setting2, setting3);
+}
+
+destParams(1); // error!
+destParams(1, {setting1: 'a', setting2: 'b'});
+
+							</code>
+							</pre>
+							<ul class="stretch">
+								<li>można dokonać destrukturyzacji obiektu oczekiwanego jako parametr na poziomie definiowania parametrów funkcji</li>
+							</ul>
+							<small>zaleca się: aby parametry które mają ulec destrukturyzacji miał również domyślną wartość</small>
+					</section>
+
+					<section>
+						<h3 class="no-transform">"spread operator", czyli "Szkrótem Asterixie! Szkrótem!"</h3>
+							<pre>
+							<code data-trim>
+var params = ['a', 'b'];
+
+function yYoOeE (param1, param2) { }
+
+// zamiast
+yYoOeE.apply(yYoOeE, params);
+// szkrótem!
+yYoOeE(...params);
+
+							</code>
+							</pre>
+
+							<ul class="stretch">
+								<li><b class="color-white">nowy operator ...</b> wykorzystywany podczas wywoływania funkcji.
+								Pozwala łatwo przekształcić tablicę/string (każdy iterable) na kolejne parametry funkcji... "rozwinać wskazany iterable"</li>
+							</ul>
+
+					</section>
+
+					<section>
+						<h3 class="no-transform">lepsza obsługa nazw funkcji</h3>
+							<ul class="stretch">
+								<li>nowa właściwość statyczna funkcji: <b class="color-white">.name</b> zawiera jej nazwę, bez względu na metodę jej deklaracji
+									<ul class="stretch">
+										<li>w przypadku funkcji bedących nazwanymi function-expressions użyta nazwa ma wyższy priorytet</li>
+										<li>w przypadku funkcji będących anonimowymi function-expressions użyta zostanie nazwa zmiennej lub właściwości obiektu
+										do której dana funkcja ma zostać przypisana
+										</li>
+										<li>
+											akcesory (getter'y i setter'y) zawierają dodatkowy prefix odpowiadający typowi akcesora tj. "get" lub "set";
+										</li>
+									</ul>
+								</li>
+							</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">lepsza obsługa nazw funkcji c.d.</h3>
+							<ul class="stretch">
+								<li> nowa właściwość statyczna funkcji: <b class="color-white">.name</b> c.d.
+									<ul class="stretch">
+										<li>tzw. "bounded functions" czyli pochodzące z użycia `.bind` mają prefix "bound"</li>
+										<li>funkcje anonimowe uzyskują nazwę "anonymous"</li>
+									</ul>
+								</li>
+							</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">lepsza obsługa nazw funkcji c.d.</h3>
+							<pre>
+							<code data-trim>
+var doSomething = function doSomethingElse() { };
+// doSomething.name == "doSomethingElse"
+
+function doSomething () { }
+// doSomething.name == "doSomething"
+
+var doAnotherThing = function () { };
+// doAnotherThing.name == "doAnotherThing"
+
+var person = { get firstName () { }, sayName: function () { }};
+// person.firstName.name == "get firstName"
+// person.sayName.name == "sayName"
+
+var test = doSomething.bind(null);
+// test.name == "bound doSomething"
+
+// (function () {}).name == "anonymous"
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">funkcje blokowe, tzw. "block level declared functions"</h3>
+							<ul class="stretch">
+								<li>ECMAScript 6 wprowadza możliwość deklarowania funkcji w dla dowolonych bloków kodu (czyli zachowujących się jak zmienne lokalne
+								zadeklarowane z użyciem `let`)<br><br>
+								<b>ale uwaga!</b> funkcje <u>deklarowane</u> w przeciwieństwie do <u>function expressions</u> definiowanych z użyciem `let` są
+								hoistowane w zakresie danego bloku gdy używany jest "strict mode", poza nim są hoistowane do najbliższego bloku funkcyjnego</li>
+							</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">funkcje blokowe, tzw. "block level declared functions" c.d.</h3>
+							<pre>
+							<code data-trim>
+"use strict";
+
+if ( true ) {
+	console.log( typeof doSomething); // "function"
+	function doSomething() { }
+}
+
+console.log( typeof doSomething);
+// "undefined"
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">"arrow functions", czyli uproszczone definiowanie funkcji</h3>
+							<ul class="stretch">
+								<li>"arrow functions" to anonimowe funkcje definowane za pomocą <b class="color-white">nowej notacji</b> z użyciem <b class="color-white">=></b>,
+								(tzw. "strzałki" - stąd nazwa)</li>
+							</ul>
+
+							<pre>
+							<code data-trim>
+var justReturn = value => value;
+
+// jest równoznaczne z:
+
+var justReturn = function (value) { return value; };
+
+[0,1,2].forEach(v => {
+	results.push(v * 2);
+});
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">"arrow functions" c.d.</h3>
+							<ul class="stretch">
+								<li>"arrow functions" mogą przyjmować od 0* do n** parametrów. <b>Ale!</b> każda forma inna niż 1-parametrowa
+								wymaga opakowania argumentów w nawiasy okrągłe *<b class="color-white">()</b> lub **<b class="color-white">(...)</b></li>
+								<li>bardziej złożone funkcje należy opakować curly braces<br><b class="color-white">{...}</b></li>
+							</ul>
+
+							<pre>
+							<code data-trim>
+var test = () => 'test';
+
+var add = (param1, param2) => { return param1 + param2 };
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">prawdy prawdziwe ;) n.t "arrow functions"</h3>
+							<ul class="stretch">
+								<li><b class="color-white">this</b> jest chronione i statycznie zbindowane do miejsca definicji (tzw. implicit binding / static bound)</li>
+								<li>nie można ich używać jako konstruktorów, tj. z operatorem <b class="color-white">new</b> (literatura określa je jako "notNEWable")</li>
+								<li>w przypadku wersji zero- lub jedno- parametrowej nie trzeba stosować <b class="color-white">return</b><br>
+									<small>aby zwrócić obiekt należy go opakować w nawiasy okrągłe ({})</small>
+								</li>
+								<li>"arrow functions" mogą być "nazwane"*</li>
+							</ul>
+							<pre>
+							<code data-trim>
+var addFn = add() => { return add() };
+							</code>
+							</pre>
+							<small>* wciąż dyskutowane</small>
+					</section>
+
+					<section>
+						<h3 class="no-transform">inne prawdy prawdziwe ;) n.t "arrow functions"</h3>
+							<ul class="stretch">
+								<li>nie posiadają własnego <b class="color-white">`arguments`</b><br>
+								<small>(arguments wskazuje na najbliższy dostępny)</small>
+								</li>
+								<li>"arrow functions" można z powodzeniem używać jako IIFEs wystarczy je opakować w nawiasy okrągłe</li>
+								<li>"arrow functions" <b class="color-white">nie mają prototypu</b> dostępnego przez `.prototype`</li>
+							</ul>
+					</section>
+
+				</section>
+
+				<section>
+					<section>
+						<h2>obiekty</h2>
+					</section>
+
+					<section>
+						<h3 class="no-transform">uproszczone literały obiektów</h3>
+							<ul>
+								<li><b class="color-white">"shorthand properties"</b> czyli zamiana
+								zmiennych lokalnych na właściwiości obiektu o tej samej nazwie (odwrotność destrukturyzacji)<br>
+								<small>brak wartości dla zadanej właściwiości wymusi na silniku JS przeszukanie otaczającego scope'a w poszukiwaniu
+								zmiennej o tej samej nazwe</small>
+								</li>
+							</ul>
+							<pre>
+							<code data-trim>
+let	local = 1,
+	example = { local };
+
+// example == { local: 1 };
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">uproszczone literały obiektów c.d.</h3>
+							<ul>
+								<li><b class="color-white">"shorthand methods"</b> czyli uproszczony zapis metod podczas ich definiowania
+								</li>
+							</ul>
+							<pre>
+							<code data-trim>
+let example = {
+	do() {
+		//...
+	}
+}
+
+// typeof example.local == 'function'
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">"computed properties names"</h3>
+							<ul class="stretch">
+								<li>dzięki zastosowaniu <b class="color-white">bracket notation</b> (tj. []) można definiować nazwy właściwiości
+								"wyliczane" dynamiczne w chwili definiowania obiektu
+								</li>
+							</ul>
+							<pre>
+							<code data-trim>
+let	errorSuffix = 'Error',
+	errorSuffixProvider = () => 'Error',
+
+	example = {
+		['profile' + 'Error']: false,
+		['user' + errorSuffix]: false,
+		['network' + errorSuffixProvider()]: false
+	};
+
+// example = {
+//	profileError: false, userError: false, networkError: false
+// }
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">nowe metody statyczne Object</h3>
+							<ul class="stretch">
+								<li><b class="color-white">Object.is</b> sprawdzają czy dwie podane wartości są identyczne przy zastosowaniu
+								operatora ścisłego porównania <i>===</i> z wsparcie dla szczególnych przypadków takich jak +0, -0, NaN</li>
+								<li><b class="color-white">Object.assign</b> wprowadza wsparcie dla mixowania/ mergowania obiektów. Kopiuje wszystkie
+								"enumerable" properties z dowolnej ilości <i>źródełowych obiektów</i> do <i>obiektu celu</i><br>
+								<small>nie kopiuje akcesorów, a zwróconą przez getter (jeśli zdefinowany) wartość</small>
+								</li>
+							</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">nowe metody statyczne Object c.d.</h3>
+							<ul class="stretch">
+								<li>
+								<b class="color-white">Object.setPrototypeOf</b> zmienia prototype-chain instancji obiektu.
+								Jest przeciwieństwem <b class="color-white">Object.getPrototypeOf</b> z ECMAScript 5. <br>
+								<small>To oznacza, że dochodzi do zamiany wewnętrznej właściwości "[[Prototype]]" danego obiektu.</small><br>
+								Wprowadzenie tej metoda ma na celu formalizację i standaryzację pracy z użyciem właściwości <b class="color-white">__proto__</b>
+								pomiędzy różnymi silnikami JS.<br>
+								<small>wew. __proto__ ma pracować z użyciem nowych metod. Setter __proto__ będzie wywoływał setPrototypeOf</small>
+								</li>
+							</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">nowe metody statyczne Object c.d.</h3>
+							<pre>
+							<code data-trim>
+let person = {
+    getGreeting() { return "Hello"; }
+};
+
+let dog = {
+    getGreeting() { return "Woof"; }
+};
+
+let friend = Object.create(person);
+friend.getGreeting()                        // "Hello"
+Object.getPrototypeOf(friend) === person  // true
+
+Object.setPrototypeOf(friend, dog);
+friend.getGreeting()                        // "Woof"
+Object.getPrototypeOf(friend) === dog     // true
+						</code>
+						</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">"super referencja", czyli odwołanie się do prototypu</h3>
+							<ul class="stretch">
+								<li>ECMAScript 6 wprowadza tzw. <b class="color-white">super</b> referencję czyli dostęp do
+								obiektu-prototypu z poziomu jego metod. Dodatkowo może być użyta jako funkcja, wtedy wywoła metodę o tej samej
+								nazwie w prototypie.
+								</li>
+							</ul>
+							<pre>
+							<code data-trim>
+// metoda getEmployer na instancji Developer
+// którego prototypem jest Employee
+getEmployer() {
+	Developer.prototype.getEmployer.call(this);
+	// lub
+	this.__proto__.getEmployer.call(this)
+	// lub
+	Object.getPrototypeOf( this ).getEmployer.call( this );
+	// lub w ECMAScript 6
+	super.getEmployer(); // === super.getEmployer.call(this)
+	// lub
+	super()
+}
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">super referencja, a definicja "metody"</h3>
+							<p>
+								<b class="color-white">super</b> referencja wprowadza konieczność zdefiniowana nowej ukrytej/wew. właściwiość
+								funkcji/metody oznaczonej w dokumentacji jako <b class="color-white">[[HomeObject]]</b>. Ta wskazuje na obiekt do
+								którego dana funkcja/metoda należy i jest ustawiana w chwili definiowania funkcji.
+							</p>
+					</section><section>
+						<h3 class="no-transform">super referencja, a definicja "metody"</h3>
+							<p>
+								To zmienia definicję <b class="color-white">metody</b> w JS.
+								<blockquote>
+								"ECMAScript 6 formally defines a method as a function that has an internal [[HomeObject]] property containing the object to which the method belongs.""
+								</blockquote>
+								zatem w każdym inny przypadku mamy doczynienia z funkcją!
+							</p>
+					</section>
+
+					<section>
+						<h3 class="no-transform">super referencja i przeciążanie metod @runtime</h3>
+							<p>
+								ponieważ <b class="color-white">[[HomeObject]]</b> jest stricte związany z procesem definiowana funkcji,
+								aby móc korzystać z dobordziejstw <b class="color-white">super</b> referencji w przypadku nadpisywania
+								metod obiektu w czasie jego życia, należy użyć nowej metody dostępnej dla każdej funkcji <b class="color-white">.toMethod()</b>,
+								która skonwertuje funkcję na metodę.
+							</p>
+					</section>
+
+					<section>
+						<h3 class="no-transform">toMethod w praktyce</h3>
+							<pre>
+							<code data-trim>
+let friend = {
+	sayHi() {
+		return "hi!";
+	}
+};
+
+function sayHiAndYo () {
+	return super.sayHi() + ", yo!";
+}
+
+friend.sayHi = sayHiAndYo;
+friend.sayHi(); // error!
+friend.sayHi = sayHiAndYo.toMethod(friend); // :)
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">super vs. this</h3>
+							<ul class="stretch">
+								<li><b class="color-white">super</b> zależy od miejsca definicji metody</li>
+								<li><b class="color-white">this</b> jest przetwarzany przez silnik JS @runtime - ewaluuje</li>
+								<li>przekazywanie funkcji/metody przez referencję zmienia <b class="color-white">this</b> ale
+									nie wpływa na <b class="color-white">super</b>
+								</li>
+							</ul>
+					</section>
+
+				</section>
+
+				<section>
+					<section>
+						<h2>symbole</h2>
+					</section>
+
+					<section>
+						<h3 class="no-transform">WTF?</h3>
+							<ul class="stretch">
+								<li><b class="color-white">symbol</b> to nowy, unikalny i <u>niezmienny!!!</u> primitywny typ danych,
+									który może zostać z powodzeniem wykorzystany jako identyfikator dla właściwości obiektu<br>
+									<small>Symboli można używać wszędzie tam gdzie można używać "computed property name" dzięki bracket-notation lub jako parametru
+									dla Object.defineProperty</small>
+								</li>
+
+								<li>aby utworzyć <b class="color-white">symbol</b> w zależności od jego przeznaczenia (użycie lokalne vs. użycie globalne)
+									należy posłużyć się obiektem wrapper'em <b class="color-white">Symbol</b> lub jego metodą
+									<b class="color-white">Symbol.for</b> (która zrejestruje go w globalny rejestrze)
+								</li>
+							</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">tworzenie symbolu w praktyce</h3>
+						<pre>
+							<code data-trim>
+var	sym1 = Symbol(),
+	sym2 = Symbol("foo"),
+	sym3 = Symbol("foo"),
+	sym4 = new Symbol(), // TypeError
+
+	sym5 = Symbol.for('meta_data_storage');
+	// pierwszy lookup utworzy nowy symbol o danym opisie/kluczu
+
+	// typeof sym1 == "symbol"
+	// typeof sym3 == "symbol"
+	// typeof sym5 == "symbol"
+							</code>
+							</pre>
+							<small>- symbol może zawierać opis/klucz (przechowywany wew.), który:<br>
+							w przypadku symboli globalnych może posłużyć do jego odszukania w rejestrze,<br>
+							w przypadku lokalnych może przydać się w procesie debuggowania<br><br>
+							- ponieważ <i>Symbol</i> nie jest konstruktorem nie można używać go z operatorem <i>`new`</i></small>
+					</section>
+
+					<section>
+						<h3 class="no-transform">globalny rejestr symboli</h3>
+						<pre>
+							<code data-trim>
+var	sym = Symbol.for('meta_data_storage');
+	// pierwszy lookup utworzy nowy symbol o danym opisie/kluczu
+
+console.log(Symbol.keyFor(sym)); // "meta_data_storage"
+							</code>
+							</pre>
+							<small>w przypadku użycia keyFor z symbolem lokalnym metoda zwróci <i>undefined</i></small>
+					</section>
+
+					<section>
+						<h3 class="no-transform">rzutowanie symboli</h3>
+							<ul class="stretch">
+								<li>na <b class="color-white">string</b> jest możliwe tylko jawnie z użyciem konstruktora <b class="color-white">String(...)</b>
+								<br><small>To znaczy, że niejawne rzutowanie np. <i>''+sym</i> zakończy się błędem</small>
+								</li>
+								<li>na <b class="color-white">number</b> jest niemożliwe i zwróci błąd</li>
+								<li>na <b class="color-white">boolean</b> zawsze <b class="color-white">true</b></li>
+							</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">"well-known symbols"</h3>
+							<p>to <b class="color-white">lista symboli wykorzystywanych w silniku JS i opisanych w specyfikacji</b> jako dostępnych dla programisty
+								w celu umożliwenia zmian w część wewnętrznych zachowań języka. Spec. posługuje się notacją <b class="color-white">"@@nazwaSymbolu"</b>
+								dla odróżnienia symboli od innych danych
+							</p>
+					</section>
+
+
+					<section>
+						<h3 class="no-transform">"well-known symbols" przykłady</h3>
+							<ul class="stretch">
+								<li>
+									<b class="color-white">@@toStringTag</b> dostępny via <b class="color-white">Symbol.toStringTag</b>
+									to wew. właściwość obiektów używana przez <b class="color-white">Object.prototype.toString</b>
+									do zbudowania "opisu" obiektu: "[object Object]" podczas wywołania tej metody.<br>
+									Dostęp do tego symbolu umożliwia nadpisanie output metody do stanu: "[object Custom]"*
+								</li>
+								<li>
+									<b class="color-white">@@toPrimitive</b> dostępny via <b class="color-white">Symbol.toPrimitive</b>
+									to wew. metoda obiektów używana do rzutowania na podstawie przekazane parametry <i>hint</i>, można ją
+									nadpisać i zaimplementować własną metodą rzutowania
+								</li>
+							</ul>
+							<small>* - aby zapobiec próbą spoofingu wprowadzono zabezpieczenie dla cześci wbudowanych obiektów:
+							Array, Arguments, Null, Undefined, Boolean, Date, Error, Function, Number, RegExp, String. Przeciążenie
+							@@toStringTag spowoduje, że output będzie wyglądał tak: [object ~@@toStringTag]
+							</small>
+					</section>
+
+					<section>
+						<h3 class="no-transform">"well-known symbols" przykład</h3>
+							<pre>
+							<code data-trim>
+function Person(name) {
+	this.name = name;
+}
+
+Person.prototype[Symbol.toStringTag] = "Person";
+
+Person.prototype.toString = function () {
+	return this .name;
+};
+
+var me = new Person("Nicholas");
+
+console.log(me.toString());	// "Nicholas"
+console.log(Object.prototype.toString.call(me)); // "[object Person]
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">właściwości obiektów zdefiniowane z użyciem symboli</h3>
+							<p>
+								ponieważ <b class="color-white">Object.getOwnPropertyNames</b> nie zwróci właściwości
+								zdefniowanych za pomocą symboli, aby uzyskać do nich dostęp należy użyć
+								<b class="color-white">Object.getOwnPropertySymbols</b>, który zwróci array symboli
+							</p>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>iteratory i generatory</h2>
+					</section>
+
+					<section>
+						<h3 class="no-transform">iteratory</h3>
+						<ul class="stretch">
+							<li>
+								<b class="color-white">iterator</b> w ECMAScript 6 to wzorzec programistyczny, którego wykorzystanie
+								jest dodatkowo wspierane przez silniki JS
+							</li>
+							<li>
+								<b class="color-white">iterator</b> to obiekt implementujący metodę <b class="color-white">.next()</b>,
+								która za każdy wywołaniem zwraca obiekt eksponujacy 2 właściwości: <b class="color-white">done</b> i
+								<b class="color-white">value</b>
+							</li>
+							<li>
+								dodatkowo oczekuję się aby po "przekroczeniu zakresu" <b class="color-white">iterator</b> zwrócił
+								dla <b class="color-white">done</b> wartość <i>true</i>, a dla <b class="color-white">value</b> wartość <i>undefined</i>*
+							</li>
+						</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">przykładowy iterator</h3>
+							<pre>
+							<code data-trim>
+function createIterator(items) {
+	var i = 0;
+	return {
+		next: function () {
+			var	done = (i >= items.length),
+				value = !done ? items[i++] : undefined;
+			return { done: done, value: value };
+		}
+	};
+}
+
+var iterator = createIterator([1, 2, 3]);
+console.log(iterator.next()); // "{ value: 1, done: false }"
+console.log(iterator.next()); // "{ value: 2, done: false }"
+console.log(iterator.next()); // "{ value: 3, done: false }"
+console.log(iterator.next()); // "{ value: undefined, done: true }
+							</code>
+							</pre>
+						  <small>definicja takiego iteratora jest możliwa już w ECMAScript 5, jedynie
+						  ostatni przypadek jest szczególny i związany z oczekiwaniami ECMAScript 6</small>
+					</section>
+
+					<section>
+						<h3 class="no-transform">generatory</h3>
+						<ul class="stretch">
+							<li>
+								<b class="color-white">generatory</b> to całkowita nowość wprowadzająca do języka szereg możliwości
+							</li>
+							<li>
+								<b class="color-white">generator</b> tworzy się / oznacza poprzez zastosowanie znaku <b class="color-white">*</b> przed
+								nazwą funkcji, a po słowie kluczowym <i>function</i>*
+							</li>
+							<li>
+								wartości zwracane przez <b class="color-white">generator</b> automatycznie implementują wzorzec iteratora
+							</li>
+							<li>
+								<b class="color-white">generator</b> wykorzystują nowe wyrażenie <b class="color-orange">yield</b>**, po którym dalsze wykonanie
+								generatora jest <u>pauzowane</u>
+							</li>
+						</ul>
+						<small>
+						*- można je również definiować jako function-expression<br>
+						**- <i>yield</i> działa zbliżenie do <i>return</i> zwraca dowolną wartość albo wynik wykonania wyrażenia</small>
+					</section>
+
+					<section>
+						<h3 class="no-transform">przykładowy generator</h3>
+							<pre>
+							<code data-trim>
+// generator
+function *createIterator() {
+	yield 1;
+	yield 2;
+	yield 3;
+}
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">generatory c.d.</h3>
+						<ul>
+							<li>
+								<b class="color-white">generatory</b> mogą być definiowane jako metody literałów
+							</li>
+							<li>
+								<b class="color-white">generatory</b> mogą również by definiowane jako metody klas
+							</li>
+						</ul>
+						<pre>
+							<code data-trim>
+var obj = {
+	es5: function * () {},
+
+	*es6() {}
+};
+
+class A {
+	*giveMe () {}
+}
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">"iterables" czyli "symbolem go!, symbolem"</h3>
+						<ul class="stretch">
+							<li>
+								<b class="color-white">iterables</b> czyli obiekty "iterowalne", tj. posiadające metodę "iteratora" której
+								kluczem jest symbol <b class="color-white">@@iterator</b> dostępny via <b class="color-white">Symbol.iterator</b>.
+								Jej wywołanie <u>musi</u> zwracać iterator zgodny z wzorcem - metoda może zatem być generatorem
+							</li>
+							<li>
+								<i>Array, Set, Map, String, DOMNodeList</i> to przykładowe <b class="color-white">"iterables"</b>
+							</li>
+						</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">jak iterować?</h3>
+							<pre>
+							<code data-trim>
+// generator
+function *createIterator() {
+	yield 1;
+	yield 2;
+	yield 3;
+}
+
+let iterator = createIterator();
+
+for ( let i of iterator ) {
+	console.log(i);
+}
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">return w generatorze</h3>
+						<ul>
+							<li><b class="color-white">generatory</b> to w gruncie rzeczy funkcje, więc
+								można w nich używać <i class="color-white">return</i>, które to
+								która zakończyć "iterację"*
+							</li>
+							<li>zakończenie interacji zmiania flagę <i class="color-white">done</i> na <i>true</i> i zwraca
+								via <i class="color-white">value</i> wartość <i>return</i>.</li>
+							<li>Dalsze próby iteracji zwrócą <i>value</i> = <i>undefined</i>
+							</li>
+						</ul>
+
+						<pre>
+							<code data-trim>
+// generator
+function *createIterator() {
+	yield 1;
+	return 100;
+	yield 2;
+	yield 3;
+}
+							</code>
+							</pre>
+							<small>to jednak zadziała tylko przy manualnej iteracji - for..of ignoruje zwróconą wartość</small>
+					</section>
+
+					<section>
+						<h3 class="no-transform">delegacja w generatorach</h3>
+						<ul class="stretch">
+							<li>
+								<b class="color-white">generatory</b> mogą <b class="color-white">delegować</b> wykonanie
+								do innych generatorów poprzez zastowanie <b class="color-white">*</b> pomiędzy <b class="color-white">yield</b>
+								a wyrażenie po jego prawej stronie
+							</li>
+						</ul>
+							<pre>
+							<code data-trim>
+function *createNumberIterator() {
+	yield 1;
+	yield 2;
+}
+
+function *createCombinedIterator() {
+	yield *createNumberIterator();
+	yield true ;
+}
+
+var iterator = createCombinedIterator();
+console.log(iterator.next()); // "{ value: 1, done: false }"
+console.log(iterator.next()); // "{ value: 2, done: false }"
+console.log(iterator.next()); // "{ value: true, done: false }"
+console.log(iterator.next()); // "{ value: undefined, done: true }"
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">delegacja w generatorach, a domyślne iteratory</h3>
+						<ul class="stretch">
+							<li>
+								<b class="color-white">generatory</b> mogą <b class="color-white">delegować</b> wykonanie
+								także do domyślnych iteratorów poprzez poprzedzenie zwracanych przez <b class="color-white">yield</b>
+								danych znakiem <b class="color-white">*</b>
+							</li>
+						</ul>
+							<pre>
+							<code data-trim>
+function *createIterator() {
+	yield * "test";
+}
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">inne możliwości generatorów</h3>
+						<ul class="stretch">
+							<li>
+								<b class="color-white">generatory</b> mogą z powodzeniem zastąpić inne metody pracy z wykonaniami
+								asynchornicznymi jak <i>callback</i> czy <i>promisy</i>
+							</li>
+							<li>
+								<b class="color-white">generatory</b> (poza pierwszym wywołaniem) mogą przyjmować argumenty dla swoich wywołań via metoda
+								<i>.next()</i> zwróconego iteratora,
+								które stają się wartością <b class="color-white">yield</b> wewnątrz generatora<br>
+								<small>grubo zakręcony case poza zakresem tej prezentacji</small>
+							</li>
+						</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">iteratory wbudowanych typów danych</h3>
+						<ul class="stretch">
+							<li>
+								ES6 definiuje klika standardowych <b class="color-white">generatorów</b> dla wbudowanych typów danych
+								takich jak: <i> Array, Map, Set, String</i>*
+								<ul>
+									<li><b class="color-white">entires()</b> - zwraca array [klucz, wartość] dla kolejnych elementów</li>
+									<li><b class="color-white">values()</b> - zwraca wartość kolejnych elementów</li>
+									<li><b class="color-white">keys()</b> - zwraca klucze kolejnych elementów</li>
+								</ul>
+							</li>
+						</ul>
+						<small>* nie wszystkie typy danych odostępniają wszystki 3 generatory</small>
+					</section>
+
+					<section>
+						<h3 class="no-transform">iteratory wbudowanych typów danych c.d.</h3>
+						<ul class="stretch">
+							<li>
+								ES6 określa także domyślne iteratory (@@iterator) dla wymienionych typów danych
+								<ul>
+									<li>dla Array i Set <b class="color-white">values()</b></li>
+									<li>dla Map <b class="color-white">entries()</b></li>
+								</ul>
+							</li>
+						</ul>
+					</section>
+
+				</section>
+
+
+				<section>
+					<section>
+						<h2>Klasy</h2>
+					</section>
+
+					<section>
+						<h3 class="no-transform">od razu "mięso"</h3>
+							<pre>
+							<code data-trim>
+class Example extends AnotherExample {
+	constructor () {
+		super();
+	}
+
+	methodA () {}
+
+	static methodB () {}
+
+	*[Symbol.iterator]() {}
+}
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">inicjalizacja / klasy jako wyrażenia</h3>
+						<ul class="stretch">
+							<li>
+								instancje <b class="color-white">klas</b> można tworzyć <u>tylko i wyłącznie</u> z użyciem operatora
+								<u><i>new</i></u><br>
+								<small>klasa sama w sobie jest "niewykonywalna" tak jak funkcje konstruktory</small>
+							</li>
+							<li>
+								<b class="color-white">klasa</b> może zostać zdefiniowana jako wyrażenie<br>
+								<small>wtedy jej nazwa jest dostępna tylko wew. jej samej</small>
+							</li>
+						</ul>
+							<pre>
+							<code data-trim>
+var c = class C {};
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">konstruktor i właściwości klas</h3>
+						<ul class="stretch">
+							<li>
+								<b class="color-white">konstruktor klas</b> definiuje się jako metodę "specjalną" <b class="color-white">constructor</b>
+							</li>
+							<li>
+								<b class="color-white">klasy</b> mogą zawierać <u>wyłącznie metody!</u><br>
+								<small> właściwości definowane "na klasie" uznano za <i>antywzorzec</i>; należy je definować
+								@runtime lub z użyciem akcesorów</small>
+							</li>
+						</ul>
+						<pre>
+							<code data-trim>
+class Example {
+	constructor () {
+		this.property = true;
+	}
+
+	get property () {}
+	set property () {}
+}
+							</code>
+							</pre>
+							<small>ES6 definuje domyślny konstruktor</small>
+					</section>
+
+					<section>
+						<h3 class="no-transform">metody statyczne</h3>
+						<ul class="stretch">
+							<li><b class="color-white">klasa</b> może definiować metody statyczne osiągalne poza jej instancją<br>
+							<small>metody te są zapisywalne+konfigurwalne ale oczywiście nie są enumerowalne</small>
+							</li>
+						</ul>
+						<pre>
+							<code data-trim>
+class Example {
+	static test () {
+		return 'test';
+	}
+}
+
+Example.test();
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">dziedziczenie</h3>
+						<ul class="stretch">
+							<li>
+								<b class="color-white">klasy</b> mogą "dziedziczyć" po innych klasach dzięki zastosowaniu
+								operatora <b class="color-white">extends</b><br>
+								<small>który przyjmuje wyrażenie tj. inną klasę lub wyrażenie które takową zwróci</small>
+							</li>
+						</ul>
+							<pre>
+							<code data-trim>
+class Example extends AnotherExample {}
+
+class Example extends combine(AnotherExample, BaseExample) {}
+							</code>
+							</pre>
+							<small>można dziedziczyć po <i>null</i> jak i dowolnym obiekcie (nie koniecznie zdefiniowany z użyciem <i>class</i>; np. Array)</small>
+					</section>
+
+					<section>
+						<h3 class="no-transform">dziedziczenie c.d.</h3>
+						<ul class="stretch">
+							<li>
+								właściwość <b class="color-white">.prototype klasy</b> jest chroniona<br>
+								<small>tj. jest niezapisywalna, niekonfigurowalna i nieenumerowalna</small>
+							</li>
+							<li>
+								właściwość <b class="color-white">.prototype.constructor klasy</b> jest również chroniona<br>
+								<small>tj. jest niezapisywalna, niekonfigurowalna i nieenumerowalna</small>
+							</li>
+							<li>
+								właściwości <b class="color-white">.prototype.* klasy</b> są dostępne bez ograniczeń
+							</li>
+						</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">dziedziczenie, a zmiany w tworzeniu instancji w ES6</h3>
+						<p>
+							ES6 wraz z obsługą <b class="color-white">klas</b> wprowadza bardzo ważną
+							zmianę związaną z tworzeniem ich instancji:<br>
+							<b class="color-white">instancja jest tworzona w <span class="color-orange">najgłębiej położonym konstruktorze</span> całego
+							łańcucha dziedziczenia</b> podczas gdy ES5 tworzył instancje zaraz po wywołaniu operatora <i>new</i>
+						</p>
+										<p>verte &#8595;</p>
+					</section>
+
+					<section>
+						<h3 class="no-transform">wywołanie nadrzędnego konstruktora</h3>
+						<p>to wymóg w przypadku wykorzystywania dziedziczenia</p>
+						<pre>
+							<code data-trim>
+class Example extends AnotherExample {
+	constructor () {
+		this.something = true; // ReferenceError
+
+		super()
+		// WYMAGANE WYWOŁANIE konstruktora klasy nadrzędnej
+		// za pomocą "super referencji"
+
+		this.something = true;
+	}
+}
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">new.target</h3>
+						<p>
+						nowy "niejawny parametr" dostępna we wszystkich funkcjach.
+						Dla konstruktorów klas jest ref. na funkcję wywołującą.<br>
+						<small><b class="color-orange">`new.target` jest dla konstruktorów tym czym`this` jest dla funkcji</b></small>
+						</p>
+						<pre>
+							<code data-trim>
+class Example extends AnotherExample {
+	constructor () {
+		super()
+		// `new.target` w AnotherExample wskazuje
+		// na konstruktor Example
+	}
+}
+							</code>
+							</pre>
+							<small>
+								- <i>new.target.prototype</i> staję <i>prototype</i> tworzonej instacji dzięki czemu wszystkie
+								egzotyczne "właściwości" mogą zostać prawidołow zainicjalizowane<br>
+								- w przypadku normalnych funkcji <i>new.target</i> == <i>undefined</i>, dla "arrow functions" <i>new.target</i> == <i>new.target</i> otaczającego scope'a
+								<a href="http://www.2ality.com/2015/02/es6-classes-final.html#allocating_and_initializing_the_instance_object">[1]</a>
+							</small>
+					</section>
+
+					<section>
+						<h3 class="no-transform">rozszerzanie wbudowanych obiektów</h3>
+						<p>z zachowaniem ich "magicznych" właściwości jak np. Array</p>
+						<pre>
+							<code data-trim>
+class MyArray extends Array {
+	constructor () {
+		super()
+	}
+}
+
+(new MyArray()).length // będzie działać prawidłowo!
+							</code>
+							</pre>
+							<small>ten feature wymaga jednak zmian w silnikach JS!</small>
+					</section>
+
+					<section>
+						<h3 class="no-transform">wzorzec "species"</h3>
+						<p>tj. nadpisanie konstruktora używanego przez
+						metody zwracające nowe instancje, jak np. <i>Array.prototype.map</i></p>
+						<pre>
+							<code data-trim>
+class MyArray1 extends Array { }
+let result1 = new MyArray1().map(x => x);
+
+result1 instanceof MyArray1 // true
+
+class MyArray2 extends Array {
+	static get [Symbol.species]() {
+		return Array;
+	}
+}
+let result2 = new MyArray2().map(x => x);
+
+result2 instanceof MyArray2 // false
+							</code>
+							</pre>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>Kolekcje</h2>
+					</section>
+
+					<section>
+						<h3 class="no-transform">Set</h3>
+						<ul class="stretch">
+							<li>to <u>iterowalny</u>* zbiór unikalnych wartości, uporządkowanych wg. kolejności dodania, tworzony
+							przez użycie konstruktora <b class="color-white">Set</b></li>
+							<li><b class="color-white">set</b> udostępnia następujące metody:
+							<b class="color-white">.add</b>, <b class="color-white">.has</b>, <b class="color-white">.delete</b>,
+							<b class="color-white">.clear</b> do zarządzania jego zawartością oraz właściwość <b class="color-white">.size</b>
+							określającą jego wielkość
+							</li>
+						</ul>
+
+							<pre>
+							<code data-trim>
+var sample = new Set([1, "1", true, {}]); // iterable jako parametr
+sample.size // 4
+							</code>
+							</pre>
+							<small>z użyciem <i>for..of</i> lub <i>forEach</i></small>
+					</section>
+
+					<section>
+						<h3 class="no-transform">WeakSet</h3>
+						<ul class="stretch">
+							<li>to zbiór unikalnych <b class="color-white">luźnych referencji</b>, uporządkowanych wg. kolejności dodania, tworzony
+								przez użycie konstruktora <b class="color-white">WeakSet</b></li>
+							<li>instancja <b class="color-white">WeakSet</b> udostępnia te same meteody co <b class="color-white">Set</b>,
+								z wyjątkiem <b class="color-white">.clear()</b> oraz
+								nie udostępnia właściwości <b class="color-white">.size</b> ze względu na charakter przechowywanych
+								danych
+							</li>
+						</ul>
+
+							<pre>
+							<code data-trim>
+var obj = {},
+
+	sample = new WeakSet([obj]); // iterable jako parametr
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">Map</h3>
+						<ul class="stretch">
+							<li>to <u>iterowalny</u>* zbiór par klucz-wartość, uporządkowanych wg. kolejności dodania, unikalnych po kluczu, tworzony
+								przez użycie konstruktora <b class="color-white">Map</b>
+							</li>
+							<li>
+								<b class="color-white">map</b>'a udostępnia następujące metody:
+								<b class="color-white">.set</b>, <b class="color-white">.get</b>, <b class="color-white">.has</b>, <b class="color-white">.delete</b>,
+								<b class="color-white">.clear</b> do zarządzania jej zawartością oraz właściwość <b class="color-white">.size</b>
+								określającą jej wielkość
+							</li>
+						</ul>
+
+							<pre>
+							<code data-trim>
+var sample = new Map([["key1", "value1"], ["key2", "value2"]]);
+
+sample.set("key3", "value3");
+sample.get("key3");
+							</code>
+							</pre>
+							<small>z użyciem <i>for..of</i> lub <i>forEach</i></small>
+					</section>
+
+					<section>
+						<h3 class="no-transform">WeakMap</h3>
+						<ul class="stretch">
+							<li>to zbiór par klucz-wartość, gdzie kluczem są unikalne
+								<b class="color-white">luźne referencje</b>, uporządkowane wg. kolejności dodania, tworzony
+								przez użycie konstruktora <b class="color-white">WeakMap</b></li>
+							<li>instancja <b class="color-white">WeakMap</b> udostępnia te same meteody co <b class="color-white">Map</b>,
+								z wyjątkiem <b class="color-white">.clear()</b> oraz
+								nie udostępnia właściwości <b class="color-white">.size</b> ze względu na charakter przechowywanych
+								danych
+							</li>
+						</ul>
+
+							<pre>
+							<code data-trim>
+var obj = {},
+
+	sample = new WeakMap([[obj, 'test']]);
+	// iterable jako parametr
+							</code>
+							</pre>
+					</section>
+
+				</section>
+
+
+				<section>
+					<section>
+						<h2>tablice</h2>
+					</section>
+
+					<section>
+						<h3 class="no-transform">nowe możliwości</h3>
+							<ul class="stretch">
+								<li>
+									<b class="color-white">Array.from</b> nowa statyczna metoda pozwalająca skonwertować  na <i>Array</i> wszelkie "array-like objects":
+									<ul>
+										<li>obiekty eksponujące właściwość <i>.length</i> oraz składające się z "zindexowanych" elementów jak
+											<i>HTMLCollection</i> (zwrotka z <i>document.getElementsByClassName</i>)
+										</li>
+										<li>każdy iterowalny obiekt który potrafi zwrócić swoją zawartość one-by-one</li>
+									</ul>
+									<br>
+									<small>jako parametr może otrzymać funkcję mapującą wtedy zamiast kowersji zachodzi mapowanie, które
+									dodatkowo może posłużyć do "wypełniania dziur" tj. kowersji <i>undefined</i>
+									</small>
+								</li>
+
+							</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">nowe możliwości c.d.</h3>
+							<ul class="stretch">
+								<li>
+									<b class="color-white">Array.of</b> nowa metoda statyczna tworząca nowy array z przekazanych argumentów
+								</li>
+								<li>
+									<b class="color-white">.find</b> nowa metoda służąca do wyszukiwania pierwszego pasującego elementu<br>
+									<b class="color-white">.findIndex</b> nowa metoda służąca do wyszukiwania <d>indeksu</u> pierwszego pasującego elementu<br>
+									<small> w obu przypadkach funkcja jest jedynym poprawnym argumentem</small>
+								</li>
+								<li>
+									<b class="color-white">.fill</b> nowa metoda służąca do wypełniania tablicy przekazaną wartością<br>
+									<small>metod dodatkowo przyjmuje opcjonalną pozycję startowo i końcową</small>
+								</li>
+							</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">dane binarne i typed arrays</h3>
+							<ul class="stretch">
+								<li>
+									<b class="color-white">ArrayBuffer</b> czyli dane binarne w czystej postaci
+								</li>
+								<li>
+									do operowania na danych z ArrayBuffer konieczne jest stworzenie widoku, tj. reprezentacji tych danych w jednej z dostępnych postaci:
+									<b class="color-white">Int8Array</b>, <b class="color-white">Uint8Array</b>, <b class="color-white">Uint8ClampedArray</b>, <b class="color-white">Int16Array</b>,
+									<b class="color-white">Uint16Array</b>, <b class="color-white">Int32Array</b>, <b class="color-white">Uint32Array</b>, <b class="color-white">Float32Array</b>,
+									<b class="color-white">Float64Array</b>
+								</li>
+							</ul>
+					</section>
+
+				</section>
+
+				<section>
+					<section>
+						<h2>proxy</h2>
+					</section>
+
+					<section>
+						<h3 class="no-transform">"it's somekind of magic"</h3>
+							<ul class="stretch">
+								<li>
+									to kolejna zupełnie nowa funkcjonalność wprowadzana wraz z ES6, umożliwająca
+									aplikacji zmiany w zachowaniu domyślnych operacji języka związanych z "Meta Object Protocol"
+								</li>
+								<li>
+									<b class="color-white">Proxy</b> są jak dodatkowa, transparenta "warstwa" pomiędzy kodem aplikacji,
+									a wbudowanymi zachowaniami języka, pozwalając wpływać na te zachowania poprzez ich <u>przechwytywanie, śledzenie i modyfikację</u>
+								</li>
+							</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">"it's somekind of magic" c.d.</h3>
+							<ul class="stretch">
+								<li>
+									<b class="color-white">Proxy</b> zmieniają zachowanie języka poprzez definiowanie tzw. <b class="color-white">pułapek</b>
+									dla wybranych operacji, np.:
+									<ul>
+										<li>ustawianie i pobieranie wartości właściwości obiektów,</li>
+										<li>listowanie właściwości obiektu,</li>
+										<li>usuwanie właściwości obiektu,</li>
+										<li>wykonanie funkcji czy wywołanie konstruktora,</li>
+										<li>odczytywanie desktryptorów właściwości,</li>
+										<li>etc.</li>
+									</ul>
+								</li>
+							</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">przykładowe wykorzystanie Proxy</h3>
+							<ul class="stretch">
+								<li>
+									nowe proxy tworzy się przy użyciu konstruktora <b class="color-white">Proxy</b>, który oczekuje wskazania "zakrywanego obiektu" (target)
+									oraz zbioru <b class="color-white">pułapek</b>
+								</li>
+							</ul>
+							<pre>
+							<code data-trim>
+let	target = {},
+	handler = {
+		get (target, propKey, receiver) {
+			console.log('get ' + propKey);
+			return 123;
+		},
+		ownKeys (target) {
+			console.log('ownKeys');
+			return ['hello', 'world'];
+		}
+	},
+
+	proxy = new Proxy(target, handler);
+
+	proxy.foo // "get foo" -> 123
+	Object.keys(proxy) // "ownKeys" -> "['hello', 'world']"
+						</code>
+						</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">dostęp do oryginalnego obiektu, odwołania via this</h3>
+							<ul class="stretch">
+								<li>
+									wszystkie <b class="color-white">pułpaki</b> otrzymują min. jeden argument tj. referencję do przykrywanego obiektu
+								</li>
+								<li>
+									wszystkie odwołania via <b class="color-white">proxy</b>,
+									które spowodują odwołanie via <b class="color-white">this</b> w "zakrywanym" obiekcie również
+									zostaną przekierowane przez <b class="color-white">proxy</b>
+								</li>
+							</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">przechwytywalne operacje - dostępne "pułapki"</h3>
+							<ul class="stretch">
+								<li>apply, construct</li>
+								<li>defineProperty, deleteProperty, get, has, set, getOwnPropertyDescriptor</li>
+								<li>enumerate, ownKeys</li>
+								<li>isExtensible, preventExtension</li>
+								<li>setPrototypeOf, getPrototypeOf</li>
+							</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">na początku był "get"</h3>
+							<p>
+								pułapka <b class="color-white">get</b> jest na swój sposób szczególna, przez nią bowiem przechodzi większość
+								akcji wykonywanych na obiektach zatem można jej używać do całościowego przeciążania obiektów
+							</p>
+								<pre>
+								<code data-trim>
+let proxy = new Proxy({
+	a: true,
+	b: function () {}
+}, {
+get(target, propKey, receiver) {
+	console.log('get ' + propKey);
+	return target[propKey];
+}
+});
+
+proxy.a;	// "get a" + true
+proxy.b();	// "get b" + 'call to b'
+								</code>
+								</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">proxy jako prototype</h3>
+							<p>
+								<b class="color-white">proxy</b> może zostać użyte jako <i>prototyp</i> obiektu, dzięki czemu można wyłapywać operacje,
+								które nie zostały zaspokojony przez obiekt lub wymusiły lookup po łańcuchu prototypów
+							</p>
+								<pre>
+								<code data-trim>
+let proto = new Proxy({}, {
+	get(target, propertyKey, receiver) {
+		console.log('GET ' + propertyKey);
+		return target[propertyKey];
+	}
+});
+
+let obj = Object.create(proto);
+obj.bla; // GET bla
+								</code>
+								</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">jakie możliwości dają nam proxy?</h3>
+							<ul class="stretch">
+								<li>śledzie dostępu do właściwości</li>
+								<li>ostrzeżenia w przypadku dostępu do nieznanych właściwości</li>
+								<li>dostęp do elementów tablicy via bracket-notation z wykorzystaniem negatywnych indeksów</li>
+								<li>data binding</li>
+								<li>"membrany" do uruchamiania niezaufanego kodu</li>
+								<li>etc.</li>
+							</ul>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>reflect</h2>
+					</section>
+
+					<section>
+						<h3 class="no-transform">to dzięki Proxy tu jestem :)</h3>
+							<ul class="stretch">
+								<li><b class="color-white">Reflect</b> to specjalny globalny obiekt, zapewniający dostęp do metod, związanych z przechwytywalnymi operacjami
+									<br><small>lista przechwytywalnych operacji pokrywa się z listą możliwych "pułapek"</small>
+								</li>
+								<li>operacje wywoływane za pomocą metod udostępnianych przez <b class="color-white">Reflect</b> zwracają bardziej przydatne wartości<br>
+									<small>np. boolowski status wykonania operacji</small>
+								</li>
+								<li><b class="color-white">Reflect</b> pozwala wywoływać operacje zarezerwowane dla niektórych operatorów jak: <i>new</i> czy <i>delete</i> jako funkcje
+								</li>
+								<li><b class="color-white">Reflect</b> pozwala wywoływać operacje wykonywane przez akcesory jako funkcje
+								</li>
+							</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">przykład użycia Reflect</h3>
+							<pre>
+							<code data-trim>
+let handler = {
+	deleteProperty(target, propKey) {
+		console.log('DELETE ' + propKey);
+		return Reflect.deleteProperty(target, propKey);
+	},
+	has(target, propKey) {
+		console.log('HAS ' + propKey);
+		return Reflect.has(target, propKey);
+	}
+};
+
+let proxy = new Proxy({}, handler);
+
+delete proxy.test; // DELETE test
+							</code>
+							</pre>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>promise<span class="no-transform">s</span></h2>
+					</section>
+
+					<section>
+						<h3 class="no-transform">niech stanie się standard!</h3>
+							<ul>
+								<li>ES6 standaryzuje funkcjonalność <b class="color-white">Promise</b>'ów i wybierając specyfikację <u>Promise/A+</u>
+									jako oficjalne podwaliny.
+								</li>
+							</ul>
+							<pre>
+							<code data-trim>
+var promise = new Promise(function (resolve, reject) {
+	// tzw. "executor"
+
+	resolve(); //jeśli poszło OK
+
+	reject(); //jeśli coś poszło nie tak
+});
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">stany Promise'a i reagowanie na ich zmiany</h3>
+							<ul>
+								<li>każdy <b class="color-white">Promise</b> może być w jednym z 3 stanów: <i>pending</i>, <i>fulfilled</i>, <i>rejected</i>
+									(dwa ostatnio określa się dodatkowo zbiorczo jako <i>settled</i>)
+								</li>
+								<li>potencjalni konsumerzy <b class="color-white">Promise</b> oczekują na zmianę jego stanu rejestrując
+									się via <b class="color-white">.then</b>(onFulfillment, onRejection) i <b class="color-white">.catch</b>(onRejection)
+									<small>zaleca się stosowanie <i>.then</i> tylko dla obsługi "fulfilment" a <i>.catch</i> do obsługi "rejection", w celu
+									zwiększenia czytelności kodu</small>
+								</li>
+							</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">łańcuszki .then() i .catch();</h3>
+							<ul>
+								<li>kolejne wywołania <b class="color-white">.then()</b> mogą konsumować wynik wykonania poprzedniego <b class="color-white">.then()</b>,
+								czyli są <i>chainable</i>
+								</li>
+								<li>zwrócone wartości primytywne zostaną po prostu przekazane do kolejnego listener'a zarejestrowanego via <b class="color-white">.then()</b></li>
+								<li>jeśli zwracaną wartością jest obiekt, obiekt ten musi być <b class="color-white">thenable</b> tj.
+									powinien eksponować metodę: <b class="color-white">.then()</b>
+								</li>
+							</ul>
+
+							<pre>
+							<code data-trim>
+promise.then(r => 1).then(r => ({})).then(r => true);
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">łańcuszki .then() i .catch(); c.d.</h3>
+							<ul>
+								<li><b class="color-white">.then()</b> może również konsumować wyniki <b class="color-white">.catch()</b> :)</li>
+								<li><b class="color-white">.catch()</b> reaguje na błędy egzekutora jak i dowolnego <b class="color-white">.then()</b> w łańcuszku go poprzedzającym</li>
+							</ul>
+							<pre>
+							<code data-trim>
+promise.then(r => 1).catch(e => ({})).then(r => true);
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">wszystkie "obietnice" lubią się ścigać</h3>
+							<ul>
+								<li>Promise<b class="color-white">.all()</b> pozwala wyprodukować nowy <b class="color-white">Promise</b> z n-przekazanych, który będzie oczekiwał,
+									aż zmienią stan na jeden z możliwych stanów "settled"
+								</li>
+								<li>Promise<b class="color-white">.race()</b> pozwala wyprodukować nowy <b class="color-white">Promise</b> z n-przekazanych, który zostaje
+								rozwiązany przez ten z przekazanych promisów który najszybciej zmieni swój stan na któryś z możliwych stanów "settled"</li>
+							</ul>
+							<pre>
+							<code data-trim>
+Promise.all([promise1, promise2, promise3]);
+
+Promise.race([promiseDownload1, promiseDownload2, promiseDownload3]);
+							</code>
+							</pre>
+					</section>
+
+				</section>
+
+				<section>
+					<section>
+						<h2>module<span class="no-transform">s</span></h2>
+					</section>
+
+					<section>
+						<h3 class="no-transform">podstawy</h3>
+							<ul>
+								<li>
+									specyfikacja ES6 wprowadza obsługę <b class="color-white">modułów</b>, która jest kompromisem
+									pomiędzy dwoma najbardziej popularnymi standardami <u>CommonJS i AMD</u>.
+								</li>
+								<li><b class="color-white">moduły</b> to nic innego jak pliki, które zasadniczo nie muszą przyjmować żadnej szczególnej postaci, poza
+									eksponowanie wybranej funkcjonalności poprzez jej export.
+								</li>
+							</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">przykład</h3>
+							<pre>
+							<code data-trim>
+// modules/A.js
+export default function () {};
+
+// modules/B.js
+export function print() {};
+
+// modules/C.js
+import A from 'modules/A';
+import {print} from 'modules/B';
+
+export default function () {};
+
+// modules/D.js
+import C from 'modules/C';
+C();
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">statyczna struktura modułów</h3>
+							<ul>
+								<li><b class="color-white">moduły</b> mają "statyczną struktruę" można jasno określić
+									co jest importowane, a co eksportowane bez faktycznego wykonania ich kodu
+								</li>
+								<li>dzięki możliwości przeprowadzenie analizy statycznej, silniki mogą przeprowadzić szereg wew. optymalizacji bowiem od razu wiadomo do jakich zmiennych
+									globalnych moduł uzyskuje dostęp, z jakich zmiennych lokalnych korzysta, które są współdzielone, które pochodzą
+									z innych modułów oraz gdzie dane zmienne są dostępne i wykorzystywane
+								</li>
+							</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">export</h3>
+							<pre>
+							<code data-trim>
+// modules/A.js
+export default function () {};
+
+export function test() {};
+export class testClass() {};
+
+// modules/B.js
+function doSomething() {}
+export doSomething;
+
+// modules/C.js
+const MY_CONST = ...;
+function myFunc() {}
+
+export { MY_CONST, myFunc };
+							</code>
+							</pre>
+							<small>moduły mogą wykonywać wiele nazwanych exportów i nie więcej niż jeden domyślny (via <i>default</i>).<br>
+								można łączyć eksport domyślny z nazwanymi w jednym module (świetnym przykładem wykorzystania mieszanego exportu są underscore.js i lodash.js)
+							</small>
+					</section>
+
+					<section>
+						<h3 class="no-transform">aliasowanie/zmiana nazwy/wskazanie podczas export'u</h3>
+							<ul>
+								<li>specyfikacja pozwala na aliasowanie i nadawanie innych nazw dla exportowanych wartości poprzez użycie
+								prostej notacji <b class="color-white"><i>{nazwaLokalna as nazwaZewnętrzna}</i></b></li>
+							</ul>
+							<pre>
+							<code data-trim>
+// modules/A.js
+export function doSomething() {}
+export {doSomething as justDo};
+
+const MY_CONST = ...;
+export { MYCONST as THATCONST };
+// lub
+export { MYCONST as default };
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">importowanie</h3>
+							<pre>
+							<code data-trim>
+import {default as theDefault} from 'modules/B';
+// ==
+import theDefault from 'modules/B';
+
+// pozostałe możliwości
+import theDefault, {named1, named2} from 'modules/B';
+import { named1, named2 } from 'modules/B';
+
+// aliasowanie / zmiana nazwy podczas importu
+import { named1 as moduleBFn };
+
+// importowanie modułu do obiektu/tworzenie "namespace"
+import * as moduleB from 'modules/B';
+
+// ładowanie bez importu
+import 'modules/B';
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">API</h3>
+							<ul>
+								<li><b class="color-white">moduły</b> są osiągalne również za pomocą API. Specyfikacja definiuje nowy globalny obiekt:
+									<b class="color-white">System</b>, który udostępnia następujące metody:
+									<ul>
+										<li><b class="color-white">.import()</b> - ładuje wskazany modułu (zwraca promise dla operacji)</li>
+										<li><b class="color-white">.define()</b> - do definowana modułu @runtime (taki "eval")</li>
+										<li><b class="color-white">.module()</b> - do stworzenia nowego modułu z przekazanego kodu</li>
+										<li><b class="color-white">.set()</b> - do zarejestrowania moduły stworzonego przez <i>.module</i></li>
+									</ul>
+								</li>
+							</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">Tips & Tricks</h3>
+							<ul>
+								<li>docelowo loadery modułów mają wspierać <u>hook'i</u>, możliwość lintowania modułów podczas ich ładowania,
+								automatyczne "tłumaczenie" modułów (np. z CoffeScript'u), wspierać wykorzystanie "legacy modules" (np. AMD, Node.js)
+								</li>
+								<li>
+								definiowane modułów ma być również możliwe via plain old HTML za pomocą: <b class="color-white">&lt;script&gt;&lt;module&gt;&lt;/module&gt;&lt;/script&gt;</b>
+							</ul>
+					</section>
+
+				</section>
+
+				<section>
+					<section>
+						<h2>"tail call" optimization</h2>
+					</section>
+
+					<section>
+						<h3 class="no-transform">czym jest "tail call"</h3>
+						<ul>
+							<li>
+								To sytuacja w której ostatnią akcją wykonaną przez funkcję w chwili zwracania wartości jest wywołanie funkcji,
+								po którym wiadomo, żę funkcja nie wykona już żadnego innego zadania<br>
+								<blockquote class="stretch">funkcja przekazuje piłeczkę do wywoływanej innej funkcji i po prostu "znika" z gry</blockquote>
+							</li>
+						</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">optymalizacja</h3>
+						<ul>
+							<li>
+								zdolność wykrycia <b class="color-white">tail call</b> otwiera możliwość do wykonania
+								optymalizacji w postaci wykorzystania istniejącego stack-frame zamiast tworzenia nowego
+								na potrzeby wywołania nowej funkcji.
+							</li>
+						</ul>
+							<pre>
+							<code data-trim>
+function add5(a) {
+	   return a + 5;
+}
+
+function add10 (a){
+
+	return add5(a); // tail call
+	return 5 * add5(a); // a tutaj nie
+
+	if (a > 5) {
+		return add(10); // recursive tail call
+	}
+}
+							</code>
+							</pre>
+					</section>
+
+					<section>
+						<h3 class="no-transform">od czego zależy zdolność optymalizacji?</h3>
+						<ul>
+							<li>
+								zdolność do optymalizacji <b class="color-white">tail call</b> zależy przede wszystkim od możliwości samego języka i jego interpreterów/kompilatorów,
+								nie od programisty. Specyfikacja ECMAScript 6 bardzo dokładnie definuje czym jest "tail position" (tj. ostatnie wywołanie) i
+								bardzo jasno określa okoliczności niezbędne do wykonania optymalizacji (np. użycie "strict mode").
+							</li>
+						</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">optymalizacja w praktyce</h3>
+							<pre>
+							<code data-trim>
+function computeMaxCallStackSize() {
+    try {
+        return 1 + computeMaxCallStackSize();
+    } catch (e) {
+        // Call stack overflow
+        return 1;
+    }
+}
+
+function computeMaxCallStackSize(size) {
+    size = size || 1;
+    return computeMaxCallStackSize(size + 1);
+}
+							</code>
+							</pre>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>ES6 już dziś</h2>
+					</section>
+
+					<section>
+						<h3 class="no-transform">przeglądarki</h3>
+						<img src="images/es6-browsercover-24-04-2015.png"><br>
+						<small>źródło: <a href="http://kangax.github.io/compat-table/es6/" target="_blank">http://kangax.github.io/compat-table/es6/</a> (24.04.2015)</small>
+					</section>
+
+					<section>
+						<h3 class="no-transform">server-side .js</h3>
+						<img src="images/es6-serverscover-24-04-2015.png"><br>
+						<small>źródło: <a href="http://kangax.github.io/compat-table/es6/" target="_blank">http://kangax.github.io/compat-table/es6/</a> (24.04.2015)</small>
+						<small>źródło: <a href="https://iojs.org/en/es6.html" target="_blank">https://iojs.org/en/es6.html</a> (24.04.2015)</small>
+					</section>
+
+					<section>
+						<h3 class="no-transform">compilers / transpilers / polyfills</h3>
+						<img src="images/es6-compilerscover-24-04-2015.png"><br>
+						<small>źródło: <a href="http://kangax.github.io/compat-table/es6/" target="_blank">http://kangax.github.io/compat-table/es6/</a> (24.04.2015)</small>
+					</section>
+
+					<section>
+						<h3 class="no-transform">zatem jak bezpiecznie użyć ES6 w projekcie już dziś?</h3>
+						<ul>
+							<li>
+								dzięki ogólnodostępnym narzędziom i odrobinie rozwagi :)<br>
+								<a href="https://github.com/addyosmani/es6-tools" target="_blank">https://github.com/addyosmani/es6-tools</a>
+							</li>
+						</ul>
+					</section>
+
+					<section>
+						<h3 class="no-transform">ECMAScript 6 showcases</h3>
+						<ul>
+							<li><a href="https://github.com/sindresorhus/esnext-showcase" target="_blank">https://github.com/sindresorhus/esnext-showcase</a></li>
+						</ul>
+					</section>
+
+				</section>
+
+				<section>
+						<section>
+							<h2>Gdzie dalej?</h2>
+						</section>
+
+						<section>
+							<h3 class="no-transform">Warte polecenia</h3>
+							<ul>
+								<li><a href="https://leanpub.com/understandinges6/read/" target="_blank">Understanding ECMAScript 6</a> by Nicholas C. Zakas</li>
+								<li><a href="http://www.2ality.com/" target="_blank">2ality - JavaScript and more</a> by Dr. Axel Rauschmayer</li>
+								<li><a href="http://kangax.github.io/compat-table/es6/" target="_blank">Compatibilty table</a> by Kangax</li>
+								<li><a href="https://babeljs.io/" target="_blank">BabelJS</a></li>
+								<li><a href="https://babeljs.io/repl/" target="_blank">Realtime online compiler</a></li>
+								<li><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol" target="_blank">Well known symbols</a></li>
+							</ul>
+						</section>
+
+				</section>
+				<section>
+						<h2>Dzięki :)</h2>
+						<img src="images/29ceb1d74f08dd2f13d032fa6655becf.jpg">
+				</section>
+
+			</div>
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+				slideNumber: true,
+				mouseWheel: true,
+
+				transition: 'convex', // none/fade/slide/convex/concave/zoom
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, condition: function() { return !!document.querySelector( 'pre code' ); }, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true },
+					{ src: 'plugin/notes/notes.js', async: true }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>

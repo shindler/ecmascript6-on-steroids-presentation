@@ -1,0 +1,36 @@
+.presentation-cover > * {
+    background-color: rgba(0, 43, 54, 0.5);
+    text-shadow: 5px 5px 10px #000 !important;
+}
+
+.presentation-cover > p > small {
+    line-height: 2.2em;
+}
+
+.presentation-history b {
+    color: #FFFFFF;
+}
+
+.color-orange {
+    color: #FFCC00 !important;
+}
+
+.color-white {
+    color: #FFFFFF !important;
+}
+
+.no-transform {
+    text-transform: none !important;
+}
+
+h3 {
+    color: #D7B428 !important;
+}
+
+li {
+    margin-bottom: 0.5em !important;
+}
+
+pre {
+    box-shadow: none !important
+}
